@@ -1,0 +1,18 @@
+## .NET
+bin/
+obj/
+publish-linux/
+publish-deploy/
+
+## IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+## macOS
+.DS_Store
+Thumbs.db
+
+## Secrets (production settings should not be committed)
+appsettings.Production.json

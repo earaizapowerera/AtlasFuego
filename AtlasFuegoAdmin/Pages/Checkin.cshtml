@@ -1,0 +1,167 @@
+@page
+@model CheckinModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check-in Scanner - FUEGO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body { background: #1a0505; color: #fff; min-height: 100vh; }
+        .scanner-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .header-bar { background: #2a0a0a; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cc4400; }
+        .header-bar a { color: #cc9977; text-decoration: none; font-size: 14px; }
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; }
+        .result-card { background: #2a0a0a; border: 1px solid #cc4400; border-radius: 12px; padding: 20px; margin-top: 20px; display: none; }
+        .result-card.show { display: block; }
+        .result-foto { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #cc4400; margin: 0 auto 15px; display: block; }
+        .result-nombre { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 5px; }
+        .result-empresa { color: #cc9977; text-align: center; font-size: 16px; margin-bottom: 15px; }
+        .btn-checkin { background: #cc4400; border: none; color: #fff; padding: 12px 30px; border-radius: 8px; font-size: 18px; width: 100%; font-weight: bold; }
+        .btn-checkin:hover { background: #dd5500; color: #fff; }
+        .btn-checkin:disabled { background: #555; }
+        .status-msg { text-align: center; padding: 10px; border-radius: 8px; margin-top: 15px; font-weight: bold; }
+        .status-ok { background: #1a4a1a; color: #66ff66; }
+        .status-ya { background: #4a4a1a; color: #ffcc44; }
+        .status-err { background: #4a1a1a; color: #ff6666; }
+        .scan-instruction { text-align: center; color: #cc9977; margin: 15px 0; font-size: 14px; }
+        .btn-rescan { background: transparent; border: 1px solid #cc4400; color: #cc9977; padding: 8px 20px; border-radius: 6px; margin-top: 10px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="header-bar">
+        <strong style="color:#ffaa66;">Check-in FUEGO</strong>
+        <a href="/">Volver a Registros</a>
+    </div>
+
+    <div class="scanner-container">
+        <p class="scan-instruction">Escanea el QR del invitado para confirmar su asistencia</p>
+
+        <div id="reader"></div>
+
+        <div class="result-card" id="result-card">
+            <img id="result-foto" class="result-foto" style="display:none;" />
+            <div class="result-nombre" id="result-nombre"></div>
+            <div class="result-empresa" id="result-empresa"></div>
+
+            <div id="status-area"></div>
+
+            <button class="btn-checkin" id="btn-checkin" onclick="confirmarCheckin()" style="display:none;">
+                CONFIRMAR CHECK-IN
+            </button>
+
+            <button class="btn-rescan" onclick="reiniciarScanner()">ESCANEAR OTRO</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+        let html5QrCode;
+        let registroId = null;
+
+        function iniciarScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onQrSuccess,
+                () => {}
+            ).catch(err => {
+                document.getElementById('reader').innerHTML = '<p class="text-center text-warning p-3">No se pudo acceder a la cámara. Verifica los permisos.</p>';
+            });
+        }
+
+        async function onQrSuccess(decodedText) {
+            html5QrCode.stop();
+
+            try {
+                const response = await fetch('/Checkin?handler=Buscar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
+                    body: JSON.stringify({ qrContent: decodedText })
+                });
+                const data = await response.json();
+
+                const card = document.getElementById('result-card');
+                card.classList.add('show');
+
+                if (data.success) {
+                    registroId = data.id;
+                    document.getElementById('result-nombre').textContent = data.nombre;
+                    document.getElementById('result-empresa').textContent = data.empresa;
+
+                    const foto = document.getElementById('result-foto');
+                    if (data.foto) {
+                        foto.src = data.foto;
+                        foto.style.display = 'block';
+                    } else {
+                        foto.style.display = 'none';
+                    }
+
+                    if (data.confirmado) {
+                        document.getElementById('status-area').innerHTML = '<div class="status-msg status-ya">Ya tiene check-in (' + data.fechaConfirmacion + ')</div>';
+                        document.getElementById('btn-checkin').style.display = 'none';
+                    } else {
+                        document.getElementById('status-area').innerHTML = '';
+                        document.getElementById('btn-checkin').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('result-nombre').textContent = 'No encontrado';
+                    document.getElementById('result-empresa').textContent = '';
+                    document.getElementById('result-foto').style.display = 'none';
+                    document.getElementById('status-area').innerHTML = '<div class="status-msg status-err">' + data.message + '</div>';
+                    document.getElementById('btn-checkin').style.display = 'none';
+                }
+            } catch (e) {
+                document.getElementById('result-card').classList.add('show');
+                document.getElementById('status-area').innerHTML = '<div class="status-msg status-err">Error de conexión</div>';
+            }
+        }
+
+        async function confirmarCheckin() {
+            if (!registroId) return;
+            const btn = document.getElementById('btn-checkin');
+            btn.disabled = true;
+            btn.textContent = 'CONFIRMANDO...';
+
+            try {
+                const response = await fetch('/Checkin?handler=Confirmar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
+                    body: JSON.stringify({ id: registroId })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('status-area').innerHTML = '<div class="status-msg status-ok">CHECK-IN EXITOSO</div>';
+                    btn.style.display = 'none';
+                } else {
+                    document.getElementById('status-area').innerHTML = '<div class="status-msg status-err">' + data.message + '</div>';
+                }
+            } catch (e) {
+                document.getElementById('status-area').innerHTML = '<div class="status-msg status-err">Error de conexión</div>';
+            }
+            btn.disabled = false;
+            btn.textContent = 'CONFIRMAR CHECK-IN';
+        }
+
+        function reiniciarScanner() {
+            document.getElementById('result-card').classList.remove('show');
+            document.getElementById('status-area').innerHTML = '';
+            registroId = null;
+            iniciarScanner();
+        }
+
+        function getToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        }
+
+        iniciarScanner();
+    </script>
+    @Html.AntiForgeryToken()
+</body>
+</html>

@@ -1,0 +1,11 @@
+@{
+    // Checkin tiene su propio layout especial
+    if (ViewContext.RouteData.Values["page"]?.ToString()?.Contains("Checkin") == true)
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "/Areas/Security/Pages/Shared/_Layout.cshtml";
+    }
+}
