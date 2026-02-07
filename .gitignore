@@ -16,3 +16,4 @@ Thumbs.db
 
 ## Secrets (production settings should not be committed)
 appsettings.Production.json
+appsettings.Development.json

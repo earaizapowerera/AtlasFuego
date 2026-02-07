@@ -92,7 +92,7 @@ Comparte la misma base de datos que el micrositio:
 
 ## GitHub
 
-- **Repositorio**: (pendiente de crear)
+- **Repositorio**: https://github.com/earaizapowerera/AtlasFuego
 
 ## Sistema Relacionado
 

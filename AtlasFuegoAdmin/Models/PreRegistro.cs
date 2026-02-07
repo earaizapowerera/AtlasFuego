@@ -11,4 +11,5 @@ public class PreRegistro
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
     public bool Confirmado { get; set; } = false;
     public DateTime? FechaConfirmacion { get; set; }
+    public bool CorreoNoFotoEnviado { get; set; } = false;
 }
