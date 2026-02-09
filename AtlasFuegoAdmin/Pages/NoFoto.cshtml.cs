@@ -88,7 +88,7 @@ public class NoFotoModel : PageModel
     private async Task EnviarCorreoNoFoto(PreRegistro registro)
     {
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Atlas FUEGO", "delivery@powerera.com"));
+        message.From.Add(new MailboxAddress("Coctel de Agentes 2026", "delivery@powerera.com"));
         message.To.Add(new MailboxAddress(registro.NombreCompleto, registro.Email));
         message.Subject = "Completa tu registro - Cóctel de Agentes FUEGO 2026";
 
@@ -102,8 +102,8 @@ public class NoFotoModel : PageModel
 <table width='600' cellpadding='0' cellspacing='0' style='background-color:#2d2d2d; border-radius:12px; overflow:hidden;'>
     <tr>
         <td style='background: linear-gradient(135deg, #cc4400, #ff6600); padding:30px; text-align:center;'>
-            <h1 style='color:#fff; margin:0; font-size:28px;'>ATLAS FUEGO</h1>
-            <p style='color:#ffe0cc; margin:5px 0 0; font-size:14px;'>Cóctel de Agentes 2026</p>
+            <h1 style='color:#fff; margin:0; font-size:28px;'>COCTEL DE AGENTES 2026</h1>
+            <p style='color:#ffe0cc; margin:5px 0 0; font-size:14px;'>Seguros Atlas</p>
         </td>
     </tr>
     <tr>
