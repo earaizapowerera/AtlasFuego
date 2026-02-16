@@ -14,6 +14,10 @@ builder.Services.AddUserPortalComponent(options =>
 
 builder.Services.AddRazorPages();
 
+// CORS for mobile app
+builder.Services.AddCors(options =>
+    options.AddPolicy("MobileApp", b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+
 // DbContext for PreRegistros
 builder.Services.AddDbContext<AtlasFuegoAdmin.Data.AppDbContext>(options =>
     options.UseSqlServer("Server=dbdev.powerera.com;Database=Atlas2026;User Id=earaiza;Password=VgfN-n4ju?H1Z4#JFRE;TrustServerCertificate=true;"));
@@ -22,9 +26,27 @@ builder.WebHost.UseUrls("http://localhost:5077");
 
 var app = builder.Build();
 
+var mobileApiKey = app.Configuration["MobileApiKey"] ?? "FUEGO2026-CHK-a7f3b9c1d4e6";
+
 // PathBase removed - now runs at root of fuegoadmin.powerera.com
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("MobileApp");
+
+// API Key middleware for /api/mobile endpoints
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api/mobile"))
+    {
+        if (!context.Request.Headers.TryGetValue("X-Api-Key", out var key) || key != mobileApiKey)
+        {
+            context.Response.StatusCode = 401;
+            await context.Response.WriteAsJsonAsync(new { error = "API Key inválida" });
+            return;
+        }
+    }
+    await next();
+});
 
 app.UseUserPortal();
 app.UseAuthentication();
@@ -32,6 +54,66 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
+
+// === Mobile API Endpoints ===
+
+app.MapPost("/api/mobile/buscar", async (MobileQrRequest req, AtlasFuegoAdmin.Data.AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.QrContent))
+        return Results.Json(new { success = false, message = "QR vacío" });
+
+    var registros = await db.PreRegistros.ToListAsync();
+    var registro = registros.FirstOrDefault(r =>
+        $"{r.FechaRegistro:yyyyMMdd HH:mm:ss} {r.NombreCompleto}" == req.QrContent);
+
+    if (registro == null)
+        return Results.Json(new { success = false, message = "Registro no encontrado" });
+
+    return Results.Json(new
+    {
+        success = true,
+        id = registro.Id,
+        nombre = registro.NombreCompleto,
+        empresa = registro.Empresa,
+        foto = registro.FotoRuta != null ? $"https://fuego.powerera.com{registro.FotoRuta}" : (string?)null,
+        confirmado = registro.Confirmado,
+        fechaConfirmacion = registro.FechaConfirmacion?.ToString("dd/MM/yyyy HH:mm")
+    });
+});
+
+app.MapPost("/api/mobile/confirmar", async (MobileConfirmarRequest req, AtlasFuegoAdmin.Data.AppDbContext db) =>
+{
+    var registro = await db.PreRegistros.FindAsync(req.Id);
+    if (registro == null)
+        return Results.Json(new { success = false, message = "Registro no encontrado" });
+
+    if (registro.Confirmado)
+        return Results.Json(new { success = false, message = "Ya tiene check-in",
+            fechaConfirmacion = registro.FechaConfirmacion?.ToString("dd/MM/yyyy HH:mm") });
+
+    registro.Confirmado = true;
+    registro.FechaConfirmacion = DateTime.Now;
+    await db.SaveChangesAsync();
+
+    return Results.Json(new { success = true, nombre = registro.NombreCompleto });
+});
+
+app.MapGet("/api/mobile/stats", async (AtlasFuegoAdmin.Data.AppDbContext db) =>
+{
+    var registros = await db.PreRegistros.ToListAsync();
+    return Results.Json(new
+    {
+        total = registros.Count,
+        asistiran = registros.Count(r => r.Asistira),
+        conFoto = registros.Count(r => r.FotoRuta != null),
+        checkedIn = registros.Count(r => r.Confirmado)
+    });
+});
+
+app.MapGet("/api/mobile/health", () =>
+    Results.Json(new { status = "ok", timestamp = DateTime.UtcNow }));
+
+// === End Mobile API ===
 
 await app.Services.InitializeUserPortalDatabase();
 
@@ -48,3 +130,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+record MobileQrRequest(string QrContent);
+record MobileConfirmarRequest(int Id);
