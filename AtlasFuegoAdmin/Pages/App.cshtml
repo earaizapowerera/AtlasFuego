@@ -1,0 +1,126 @@
+@page
+@{
+    ViewData["Title"] = "App Check-in";
+}
+
+<style>
+    .app-card {
+        max-width: 500px;
+        margin: 40px auto;
+        background: linear-gradient(135deg, #1A0505 0%, #2A0A0A 100%);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .app-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #CC4400, #FF6600);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 48px;
+    }
+    .app-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .app-subtitle {
+        color: #CC9977;
+        font-size: 14px;
+        margin-bottom: 30px;
+    }
+    .app-version {
+        color: #CC9977;
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+    .btn-download {
+        background: linear-gradient(135deg, #CC4400, #FF6600);
+        color: white;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(204,68,0,0.4);
+        color: white;
+    }
+    .btn-download i {
+        margin-right: 8px;
+    }
+    .instructions {
+        max-width: 500px;
+        margin: 30px auto;
+        text-align: left;
+    }
+    .instructions h5 {
+        color: #CC4400;
+        margin-bottom: 15px;
+    }
+    .instructions ol {
+        padding-left: 20px;
+    }
+    .instructions li {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    .instructions code {
+        background: #f8f0ec;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #CC4400;
+    }
+    .file-size {
+        color: #999;
+        font-size: 12px;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="app-card">
+        <div class="app-icon">
+            <i class="fas fa-fire" style="color:white;"></i>
+        </div>
+        <div class="app-title">FUEGO Check-in</div>
+        <div class="app-subtitle">Aplicacion de check-in para el evento<br>Coctel de Agentes FUEGO 2026</div>
+        <div class="app-version">Version 1.0 &bull; Android &bull; 28 MB</div>
+        <a href="/downloads/FUEGOCheckin.apk" class="btn-download">
+            <i class="fas fa-download"></i> Descargar APK
+        </a>
+    </div>
+
+    <div class="instructions">
+        <h5><i class="fas fa-info-circle me-2"></i>Instrucciones de instalacion</h5>
+        <ol>
+            <li>Descargar el archivo <code>FUEGOCheckin.apk</code> en el celular Android</li>
+            <li>Abrir el archivo descargado. Si pide permiso para instalar de fuentes desconocidas, activarlo</li>
+            <li>Completar la instalacion</li>
+            <li>Abrir la app <strong>FUEGO Check-in</strong></li>
+            <li>Permitir acceso a la camara cuando se solicite</li>
+            <li>Escanear el codigo QR del invitado y confirmar el check-in</li>
+        </ol>
+
+        <h5 class="mt-4"><i class="fas fa-mobile-alt me-2"></i>Requisitos</h5>
+        <ul style="color:#555;">
+            <li>Android 5.0 o superior</li>
+            <li>Camara trasera</li>
+            <li>Conexion a internet</li>
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+<script src="/js/app-menu.js"></script>
+}
