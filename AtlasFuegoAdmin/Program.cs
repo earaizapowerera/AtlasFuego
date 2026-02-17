@@ -29,7 +29,9 @@ var app = builder.Build();
 var mobileApiKey = app.Configuration["MobileApiKey"] ?? "FUEGO2026-CHK-a7f3b9c1d4e6";
 
 // PathBase removed - now runs at root of fuegoadmin.powerera.com
-app.UseStaticFiles();
+var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+provider.Mappings[".apk"] = "application/vnd.android.package-archive";
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = provider });
 app.UseRouting();
 app.UseCors("MobileApp");
 
