@@ -79,7 +79,7 @@ app.MapPost("/api/mobile/buscar", async (MobileQrRequest req, AtlasFuegoAdmin.Da
         empresa = registro.Empresa,
         foto = registro.FotoRuta != null ? $"https://fuego.powerera.com{registro.FotoRuta}" : (string?)null,
         confirmado = registro.Confirmado,
-        fechaConfirmacion = registro.FechaConfirmacion?.ToString("dd/MM/yyyy HH:mm")
+        fechaConfirmacion = registro.FechaConfirmacion?.ToString("o") // ISO 8601 UTC
     });
 });
 
@@ -91,10 +91,10 @@ app.MapPost("/api/mobile/confirmar", async (MobileConfirmarRequest req, AtlasFue
 
     if (registro.Confirmado)
         return Results.Json(new { success = false, message = "Ya tiene check-in",
-            fechaConfirmacion = registro.FechaConfirmacion?.ToString("dd/MM/yyyy HH:mm") });
+            fechaConfirmacion = registro.FechaConfirmacion?.ToString("o") });
 
     registro.Confirmado = true;
-    registro.FechaConfirmacion = DateTime.Now;
+    registro.FechaConfirmacion = DateTime.UtcNow;
     await db.SaveChangesAsync();
 
     return Results.Json(new { success = true, nombre = registro.NombreCompleto });
@@ -125,7 +125,7 @@ app.MapGet("/api/mobile/registros", async (AtlasFuegoAdmin.Data.AppDbContext db)
         fechaRegistro = r.FechaRegistro.ToString("yyyyMMdd HH:mm:ss"),
         r.Confirmado,
         fechaConfirmacion = r.FechaConfirmacion != null
-            ? r.FechaConfirmacion.Value.ToString("dd/MM/yyyy HH:mm") : null
+            ? r.FechaConfirmacion.Value.ToString("o") : null
     }).ToListAsync();
 
     return Results.Json(new { success = true, count = registros.Count, registros });
