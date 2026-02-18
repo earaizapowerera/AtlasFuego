@@ -112,6 +112,25 @@ app.MapGet("/api/mobile/stats", async (AtlasFuegoAdmin.Data.AppDbContext db) =>
     });
 });
 
+app.MapGet("/api/mobile/registros", async (AtlasFuegoAdmin.Data.AppDbContext db) =>
+{
+    var registros = await db.PreRegistros.Select(r => new
+    {
+        r.Id,
+        r.NombreCompleto,
+        r.Empresa,
+        r.Email,
+        r.Asistira,
+        r.FotoRuta,
+        fechaRegistro = r.FechaRegistro.ToString("yyyyMMdd HH:mm:ss"),
+        r.Confirmado,
+        fechaConfirmacion = r.FechaConfirmacion != null
+            ? r.FechaConfirmacion.Value.ToString("dd/MM/yyyy HH:mm") : null
+    }).ToListAsync();
+
+    return Results.Json(new { success = true, count = registros.Count, registros });
+});
+
 app.MapGet("/api/mobile/health", () =>
     Results.Json(new { status = "ok", timestamp = DateTime.UtcNow }));
 
