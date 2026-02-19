@@ -11,6 +11,7 @@ public class PreRegistro
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
     public bool Confirmado { get; set; } = false;
     public DateTime? FechaConfirmacion { get; set; }
+    public string? Qr2 { get; set; }
     public bool CorreoNoFotoEnviado { get; set; } = false;
     public bool CorreoRecordatorioEnviado { get; set; } = false;
 }

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using AtlasFuegoAdmin.Models;
 using PowerEra.UserPortal.Component.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -66,14 +67,24 @@ app.MapPost("/api/mobile/buscar", async (MobileQrRequest req, AtlasFuegoAdmin.Da
     if (string.IsNullOrWhiteSpace(req.QrContent))
         return Results.Json(new { success = false, message = "QR vacío" });
 
+    var qr = req.QrContent.Trim();
     var registros = await db.PreRegistros.ToListAsync();
-    var registro = registros.FirstOrDefault(r =>
-        $"{r.FechaRegistro:yyyyMMdd HH:mm:ss} {r.NombreCompleto}" == req.QrContent);
 
-    // Fuzzy match if exact match fails
+    // QR2 short code (6 hex chars) → direct lookup
+    PreRegistro? registro = null;
+    if (qr.Length <= 8)
+        registro = registros.FirstOrDefault(r =>
+            string.Equals(r.Qr2, qr, StringComparison.OrdinalIgnoreCase));
+
+    // Original QR: exact match
+    if (registro == null)
+        registro = registros.FirstOrDefault(r =>
+            $"{r.FechaRegistro:yyyyMMdd HH:mm:ss} {r.NombreCompleto}" == qr);
+
+    // Fuzzy match by datetime digits
     if (registro == null)
     {
-        var qrDigits = new string(req.QrContent.Where(char.IsDigit).ToArray());
+        var qrDigits = new string(qr.Where(char.IsDigit).ToArray());
         if (qrDigits.Length >= 14)
         {
             var qrDateDigits = qrDigits[..14];
@@ -87,7 +98,7 @@ app.MapPost("/api/mobile/buscar", async (MobileQrRequest req, AtlasFuegoAdmin.Da
                 registro = candidates[0];
             else if (candidates.Count > 1)
             {
-                var qrName = req.QrContent.Length > 17 ? StripToAscii(req.QrContent[17..]) : "";
+                var qrName = qr.Length > 17 ? StripToAscii(qr[17..]) : "";
                 registro = candidates.OrderByDescending(r => LetterOverlap(StripToAscii(r.NombreCompleto), qrName)).First();
             }
         }
@@ -148,6 +159,7 @@ app.MapGet("/api/mobile/registros", async (AtlasFuegoAdmin.Data.AppDbContext db)
         r.Asistira,
         r.FotoRuta,
         fechaRegistro = r.FechaRegistro.ToString("yyyyMMdd HH:mm:ss"),
+        r.Qr2,
         r.Confirmado,
         fechaConfirmacion = r.FechaConfirmacion != null
             ? r.FechaConfirmacion.Value.ToString("o") : null

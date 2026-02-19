@@ -90,9 +90,15 @@ public class RecordatorioModel : PageModel
 
     private async Task EnviarCorreoRecordatorio(PreRegistro registro)
     {
-        // Generate QR with same format as original invitation
-        var fechaStr = registro.FechaRegistro.ToString("yyyyMMdd HH:mm:ss");
-        var qrContent = $"{fechaStr} {registro.NombreCompleto}";
+        // Ensure Qr2 exists (generate if missing)
+        if (string.IsNullOrEmpty(registro.Qr2))
+        {
+            registro.Qr2 = Guid.NewGuid().ToString("N")[..6].ToUpper();
+            await _db.SaveChangesAsync();
+        }
+
+        // Use Qr2 short code for the QR image
+        var qrContent = registro.Qr2;
 
         using var qrGenerator = new QRCodeGenerator();
         var qrCodeData = qrGenerator.CreateQrCode(qrContent, QRCodeGenerator.ECCLevel.M);
@@ -170,7 +176,8 @@ public class RecordatorioModel : PageModel
                                     </td>
                                 </tr>
                             </table>
-                            <p style='color: #c17f59; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 15px 0 0 0;'>Invitación personal e intransferible</p>
+                            <p style='color: #e8dcd0; font-size: 18px; font-weight: bold; letter-spacing: 3px; margin: 12px 0 0 0;'>{registro.Qr2}</p>
+                            <p style='color: #c17f59; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 10px 0 0 0;'>Invitación personal e intransferible</p>
                         </td>
                     </tr>
                     <!-- Detalles del evento -->
