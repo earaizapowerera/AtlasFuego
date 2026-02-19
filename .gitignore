@@ -3,6 +3,7 @@ bin/
 obj/
 publish-linux/
 publish-deploy/
+publish/
 
 ## IDE
 .vs/
