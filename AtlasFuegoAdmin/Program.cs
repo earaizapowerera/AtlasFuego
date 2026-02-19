@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using PowerEra.UserPortal.Component.Extensions;
 
@@ -67,6 +69,29 @@ app.MapPost("/api/mobile/buscar", async (MobileQrRequest req, AtlasFuegoAdmin.Da
     var registros = await db.PreRegistros.ToListAsync();
     var registro = registros.FirstOrDefault(r =>
         $"{r.FechaRegistro:yyyyMMdd HH:mm:ss} {r.NombreCompleto}" == req.QrContent);
+
+    // Fuzzy match if exact match fails
+    if (registro == null)
+    {
+        var qrDigits = new string(req.QrContent.Where(char.IsDigit).ToArray());
+        if (qrDigits.Length >= 14)
+        {
+            var qrDateDigits = qrDigits[..14];
+            var candidates = registros.Where(r =>
+            {
+                var rd = new string(r.FechaRegistro.ToString("yyyyMMddHHmmss").Where(char.IsDigit).ToArray());
+                return rd.Length >= 14 && rd[..14] == qrDateDigits;
+            }).ToList();
+
+            if (candidates.Count == 1)
+                registro = candidates[0];
+            else if (candidates.Count > 1)
+            {
+                var qrName = req.QrContent.Length > 17 ? StripToAscii(req.QrContent[17..]) : "";
+                registro = candidates.OrderByDescending(r => LetterOverlap(StripToAscii(r.NombreCompleto), qrName)).First();
+            }
+        }
+    }
 
     if (registro == null)
         return Results.Json(new { success = false, message = "Registro no encontrado" });
@@ -157,6 +182,34 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Fuzzy QR match helpers
+static string StripToAscii(string s)
+{
+    var n = s.Normalize(NormalizationForm.FormD);
+    var sb = new StringBuilder(n.Length);
+    foreach (var c in n)
+    {
+        if (char.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark) continue;
+        if (char.IsLetter(c)) sb.Append(char.ToLowerInvariant(c));
+    }
+    return sb.ToString();
+}
+
+static int LetterOverlap(string dbName, string qrName)
+{
+    int di = 0, score = 0;
+    foreach (var c in qrName)
+    {
+        while (di < dbName.Length)
+        {
+            if (dbName[di] == c) { score++; di++; break; }
+            di++;
+        }
+        if (di >= dbName.Length) break;
+    }
+    return score;
+}
 
 record MobileQrRequest(string QrContent);
 record MobileConfirmarRequest(int Id);
