@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="MailKit" Version="4.8.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
     <PackageReference Include="PowerEra.UserPortal.Component" Version="1.0.6" />

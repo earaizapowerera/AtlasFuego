@@ -1,0 +1,254 @@
+@page
+@model RecordatorioModel
+@{
+    ViewData["Title"] = "Recordatorio QR - Envío de Correos";
+}
+
+<style>
+    .stat-box {
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .stat-num {
+        font-size: 32px;
+        font-weight: 700;
+    }
+    .btn-enviar {
+        background-color: #cc4400;
+        border-color: #cc4400;
+        color: #fff;
+    }
+    .btn-enviar:hover {
+        background-color: #b33c00;
+        border-color: #b33c00;
+        color: #fff;
+    }
+    .btn-enviar:disabled {
+        background-color: #666;
+        border-color: #666;
+    }
+    .foto-thumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+
+<div class="container-fluid py-3">
+    <h4 class="mb-3"><i class="fas fa-bell text-warning me-2"></i>Correo Recordatorio con QR</h4>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="stat-box bg-primary text-white">
+                <div class="stat-num">@Model.TotalConFoto</div>
+                <div>Con Foto (Asistirán)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-box bg-success text-white">
+                <div class="stat-num">@Model.Enviados</div>
+                <div>Recordatorio Enviado</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-box bg-warning text-dark">
+                <div class="stat-num">@Model.Pendientes</div>
+                <div>Pendiente de Envío</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
+        <input type="text" id="filtro" class="form-control" style="max-width:400px;" placeholder="Buscar por nombre o empresa..." oninput="filtrar()" />
+        <button class="btn btn-enviar text-nowrap" onclick="enviarSeleccionados()" id="btnEnviarSeleccionados" disabled>
+            <i class="fas fa-paper-plane me-1"></i>Enviar a seleccionados (<span id="countSeleccionados">0</span>)
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="tabla-recordatorio">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width:40px;">
+                        <input type="checkbox" id="chkAll" onchange="toggleAll(this)" class="form-check-input" />
+                    </th>
+                    <th>#</th>
+                    <th>Foto</th>
+                    <th>Nombre</th>
+                    <th>Empresa</th>
+                    <th>Email</th>
+                    <th>Recordatorio</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+            @{ var idx = 0; }
+            @foreach (var r in Model.Registros)
+            {
+                idx++;
+                <tr class="registro-row" data-nombre="@r.NombreCompleto.ToLower()" data-empresa="@r.Empresa.ToLower()" data-id="@r.Id" data-enviado="@r.CorreoRecordatorioEnviado.ToString().ToLower()" id="row-@r.Id">
+                    <td>
+                        @if (!r.CorreoRecordatorioEnviado)
+                        {
+                            <input type="checkbox" class="form-check-input chk-row" value="@r.Id" onchange="actualizarConteo()" />
+                        }
+                    </td>
+                    <td>@idx</td>
+                    <td>
+                        @if (r.FotoRuta != null)
+                        {
+                            <img src="https://fuego.powerera.com@(r.FotoRuta)" class="foto-thumb" alt="Foto" />
+                        }
+                    </td>
+                    <td>@r.NombreCompleto</td>
+                    <td>@r.Empresa</td>
+                    <td>@r.Email</td>
+                    <td id="status-@r.Id">
+                        @if (r.CorreoRecordatorioEnviado)
+                        {
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Enviado</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!r.CorreoRecordatorioEnviado)
+                        {
+                            <button class="btn btn-sm btn-enviar" onclick="enviarUno(@r.Id, this)" id="btn-@r.Id">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="text-muted"><i class="fas fa-check-circle text-success"></i></span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Toast para notificaciones -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toast" class="toast" role="alert">
+        <div class="toast-header">
+            <strong class="me-auto" id="toast-title">Notificación</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toast-body"></div>
+    </div>
+</div>
+
+<script>
+    function filtrar() {
+        const term = document.getElementById('filtro').value.toLowerCase();
+        document.querySelectorAll('.registro-row').forEach(row => {
+            const nombre = row.dataset.nombre;
+            const empresa = row.dataset.empresa;
+            row.style.display = (nombre.includes(term) || empresa.includes(term)) ? '' : 'none';
+        });
+    }
+
+    function toggleAll(masterChk) {
+        document.querySelectorAll('.chk-row').forEach(chk => {
+            const row = chk.closest('tr');
+            if (row.style.display !== 'none') {
+                chk.checked = masterChk.checked;
+            }
+        });
+        actualizarConteo();
+    }
+
+    function actualizarConteo() {
+        const checked = document.querySelectorAll('.chk-row:checked').length;
+        document.getElementById('countSeleccionados').textContent = checked;
+        document.getElementById('btnEnviarSeleccionados').disabled = checked === 0;
+    }
+
+    function mostrarToast(titulo, mensaje, exito) {
+        document.getElementById('toast-title').textContent = titulo;
+        document.getElementById('toast-body').textContent = mensaje;
+        const toastEl = document.getElementById('toast');
+        toastEl.classList.remove('bg-success', 'bg-danger', 'text-white');
+        if (exito) {
+            toastEl.classList.add('bg-success', 'text-white');
+        } else {
+            toastEl.classList.add('bg-danger', 'text-white');
+        }
+        new bootstrap.Toast(toastEl, { delay: 4000 }).show();
+    }
+
+    async function enviarUno(id, btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        try {
+            const resp = await fetch('/Recordatorio?handler=Enviar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                document.getElementById('status-' + id).innerHTML = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Enviado</span>';
+                btn.outerHTML = '<span class="text-muted"><i class="fas fa-check-circle text-success"></i></span>';
+                // Remove checkbox
+                const chk = document.querySelector('#row-' + id + ' .chk-row');
+                if (chk) chk.remove();
+                actualizarConteo();
+                mostrarToast('Enviado', 'Recordatorio enviado a ' + data.nombre, true);
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                mostrarToast('Error', data.message, false);
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            mostrarToast('Error', 'Error de conexión', false);
+        }
+    }
+
+    async function enviarSeleccionados() {
+        const checkedBoxes = document.querySelectorAll('.chk-row:checked');
+        const ids = Array.from(checkedBoxes).map(chk => parseInt(chk.value));
+        if (ids.length === 0) return;
+
+        if (!confirm(`¿Enviar recordatorio a ${ids.length} seleccionados?`)) return;
+
+        const btn = document.getElementById('btnEnviarSeleccionados');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...';
+
+        try {
+            const resp = await fetch('/Recordatorio?handler=EnviarSeleccionados', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                const msg = `${data.enviados} recordatorios enviados` + (data.errores?.length ? `, ${data.errores.length} errores` : '');
+                mostrarToast('Completado', msg, data.errores?.length === 0);
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Enviar a seleccionados (<span id="countSeleccionados">0</span>)';
+                mostrarToast('Error', data.message || 'Error al enviar correos', false);
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Enviar a seleccionados (<span id="countSeleccionados">0</span>)';
+            mostrarToast('Error', 'Error de conexión', false);
+        }
+    }
+</script>

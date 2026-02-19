@@ -12,4 +12,5 @@ public class PreRegistro
     public bool Confirmado { get; set; } = false;
     public DateTime? FechaConfirmacion { get; set; }
     public bool CorreoNoFotoEnviado { get; set; } = false;
+    public bool CorreoRecordatorioEnviado { get; set; } = false;
 }

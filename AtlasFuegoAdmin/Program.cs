@@ -138,7 +138,7 @@ app.MapGet("/api/mobile/health", () =>
 
 await app.Services.InitializeUserPortalDatabase();
 
-// Auto-create CorreoNoFotoEnviado column if not exists
+// Auto-create columns if not exists
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AtlasFuegoAdmin.Data.AppDbContext>();
@@ -147,6 +147,12 @@ using (var scope = app.Services.CreateScope())
                        WHERE TABLE_NAME='PreRegistros' AND COLUMN_NAME='CorreoNoFotoEnviado')
         BEGIN
             ALTER TABLE PreRegistros ADD CorreoNoFotoEnviado bit NOT NULL DEFAULT 0
+        END");
+    await db.Database.ExecuteSqlRawAsync(@"
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                       WHERE TABLE_NAME='PreRegistros' AND COLUMN_NAME='CorreoRecordatorioEnviado')
+        BEGIN
+            ALTER TABLE PreRegistros ADD CorreoRecordatorioEnviado bit NOT NULL DEFAULT 0
         END");
 }
 
