@@ -1,4 +1,5 @@
 @page
+@model AtlasFuegoAdmin.Pages.AppModel
 @{
     ViewData["Title"] = "App Check-in";
 }
@@ -82,29 +83,113 @@
         border-radius: 4px;
         color: #CC4400;
     }
-    .file-size {
-        color: #999;
-        font-size: 12px;
+    .versions-section {
+        max-width: 600px;
+        margin: 40px auto;
+    }
+    .versions-section h5 {
+        color: #CC4400;
+        margin-bottom: 15px;
+    }
+    .versions-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .versions-table th {
+        background: #2A0A0A;
+        color: #FFAA66;
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .versions-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+        color: #444;
+    }
+    .versions-table tr:hover td {
+        background: #fdf5f0;
+    }
+    .versions-table .btn-dl {
+        background: #CC4400;
+        color: white;
+        border: none;
+        padding: 5px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .versions-table .btn-dl:hover {
+        background: #FF6600;
+        color: white;
+    }
+    .badge-latest {
+        background: #28a745;
+        color: white;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-left: 6px;
     }
 </style>
 
 <div class="container py-4">
-    <div class="app-card">
-        <div class="app-icon">
-            <i class="fas fa-fire" style="color:white;"></i>
+    @if (Model.Latest != null)
+    {
+        <div class="app-card">
+            <div class="app-icon">
+                <i class="fas fa-fire" style="color:white;"></i>
+            </div>
+            <div class="app-title">FUEGO Check-in</div>
+            <div class="app-subtitle">Aplicacion de check-in para el evento<br>Coctel de Agentes FUEGO 2026</div>
+            <div class="app-version">Version @Model.Latest.Version &bull; Android &bull; @((Model.Latest.Size / (1024 * 1024))) MB</div>
+            <a href="/downloads/@Model.Latest.FileName" class="btn-download">
+                <i class="fas fa-download"></i> Descargar ultima version
+            </a>
         </div>
-        <div class="app-title">FUEGO Check-in</div>
-        <div class="app-subtitle">Aplicacion de check-in para el evento<br>Coctel de Agentes FUEGO 2026</div>
-        <div class="app-version">Version 2.0 &bull; Android &bull; 31 MB</div>
-        <a href="/downloads/FUEGOCheckin.apk" class="btn-download">
-            <i class="fas fa-download"></i> Descargar APK
-        </a>
-    </div>
+    }
+
+    @if (Model.ApkFiles.Any())
+    {
+        <div class="versions-section">
+            <h5><i class="fas fa-history me-2"></i>Todas las versiones</h5>
+            <table class="versions-table">
+                <thead>
+                    <tr>
+                        <th>Version</th>
+                        <th>Fecha</th>
+                        <th>Tamaño</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var apk in Model.ApkFiles)
+                    {
+                        <tr>
+                            <td>
+                                @apk.Version
+                                @if (apk == Model.ApkFiles.First())
+                                {
+                                    <span class="badge-latest">ultima</span>
+                                }
+                            </td>
+                            <td>@apk.Date.ToString("dd/MM/yyyy")</td>
+                            <td>@((apk.Size / (1024 * 1024))) MB</td>
+                            <td><a href="/downloads/@apk.FileName" class="btn-dl"><i class="fas fa-download"></i> Descargar</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 
     <div class="instructions">
         <h5><i class="fas fa-info-circle me-2"></i>Instrucciones de instalacion</h5>
         <ol>
-            <li>Descargar el archivo <code>FUEGOCheckin.apk</code> en el celular Android</li>
+            <li>Descargar el archivo APK en el celular o tablet Android</li>
             <li>Abrir el archivo descargado. Si pide permiso para instalar de fuentes desconocidas, activarlo</li>
             <li>Completar la instalacion</li>
             <li>Abrir la app <strong>FUEGO Check-in</strong></li>
