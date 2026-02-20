@@ -34,28 +34,34 @@
     <h4 class="mb-3"><i class="fas fa-fire text-danger me-2"></i>Atlas FUEGO - Registros</h4>
 
     <div class="row mb-3">
-        <div class="col-md-3">
+        <div class="col">
             <div class="stat-box bg-primary text-white">
                 <div class="stat-num">@Model.Registros.Count</div>
                 <div>Total Registros</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col">
             <div class="stat-box bg-success text-white">
                 <div class="stat-num">@Model.Registros.Count(r => r.Asistira)</div>
                 <div>Asistiran</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col">
             <div class="stat-box bg-warning text-dark">
                 <div class="stat-num">@Model.Registros.Count(r => r.FotoRuta != null)</div>
                 <div>Con Foto</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col">
             <div class="stat-box bg-info text-white">
                 <div class="stat-num">@Model.Registros.Count(r => r.Confirmado)</div>
                 <div>Check-in</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-box text-white" style="background-color:#8B4513;">
+                <div class="stat-num">@Model.Registros.Count(r => r.RegistroEnEscritorio)</div>
+                <div>Front Desk</div>
             </div>
         </div>
     </div>
