@@ -191,6 +191,12 @@ using (var scope = app.Services.CreateScope())
         BEGIN
             ALTER TABLE PreRegistros ADD CorreoRecordatorioEnviado bit NOT NULL DEFAULT 0
         END");
+    await db.Database.ExecuteSqlRawAsync(@"
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                       WHERE TABLE_NAME='PreRegistros' AND COLUMN_NAME='CorreoAgradecimientoEnviado')
+        BEGIN
+            ALTER TABLE PreRegistros ADD CorreoAgradecimientoEnviado bit NOT NULL DEFAULT 0
+        END");
 }
 
 app.Run();

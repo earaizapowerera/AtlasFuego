@@ -14,5 +14,6 @@ public class PreRegistro
     public string? Qr2 { get; set; }
     public bool CorreoNoFotoEnviado { get; set; } = false;
     public bool CorreoRecordatorioEnviado { get; set; } = false;
+    public bool CorreoAgradecimientoEnviado { get; set; } = false;
     public bool RegistroEnEscritorio { get; set; } = false;
 }
