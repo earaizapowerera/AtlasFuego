@@ -104,7 +104,7 @@ public class AgradecimientoModel : PageModel
         var bodyBuilder = new BodyBuilder();
 
         var logoImgTag = logoBytes != null
-            ? "<img src='cid:logo-fuego' alt='Cóctel de Agentes FUEGO - Atlas' width='600' style='width: 100%; height: auto; display: block; margin: 0 auto;' />"
+            ? "<img src='cid:logo-fuego' alt='Cóctel de Agentes FUEGO - Atlas' width='300' style='width: 300px; max-width: 100%; height: auto; display: block; margin: 0 auto;' />"
             : "<h1 style='text-align: center; color: #d4a574; margin: 0;'>CÓCTEL DE AGENTES FUEGO</h1>";
 
         bodyBuilder.HtmlBody = $@"
